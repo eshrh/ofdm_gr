@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2022-07-19 Tue 12:07 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>In depth explanation of the OFDM implementation in GNURadio</title>
+<meta name="author" content="Eshan" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">In depth explanation of the OFDM implementation in GNURadio</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orga87bed2">1. Introduction</a>
+<ul>
+<li><a href="#org46e239b">1.1. High level introduction to the OFDM idea</a></li>
+</ul>
+</li>
+<li><a href="#org2121866">2. Transmission</a>
+<ul>
+<li><a href="#org3f64dc6">2.1. File source</a></li>
+<li><a href="#orgad96291">2.2. Stream to tagged stream</a></li>
+<li><a href="#org22bfe1d">2.3. Stream CRC32</a></li>
+<li><a href="#org81d7f89">2.4. Header generator</a></li>
+<li><a href="#org8244518">2.5. Repack bits</a></li>
+<li><a href="#org00ef0bb">2.6. Chunks to Symbols</a></li>
+<li><a href="#orgac81717">2.7. Tagged stream mux</a></li>
+<li><a href="#org8951b51">2.8. OFDM carrier allocator</a>
+<ul>
+<li><a href="#org3b8e12d">2.8.1. Sync words in OFDM synchronization</a></li>
+<li><a href="#org0e7c62c">2.8.2. Streams vs vectors</a></li>
+</ul>
+</li>
+<li><a href="#orgd822fc1">2.9. FFT</a></li>
+<li><a href="#org548155e">2.10. OFDM cyclic prefixer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-orga87bed2" class="outline-2">
+<h2 id="orga87bed2"><span class="section-number-2">1.</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+GNURadio (GR) provides the <code>OFDM Transmitter</code> and <code>OFDM Receiver</code>
+blocks to do orthogonal frequency division multiplexing. These blocks
+are hierarchical, meaning that they're really composed of other (C++)
+blocks internally. Indeed, both of these blocks are written in python
+and simply describe connections between blocks. Because of this, there's a
+great deal of implementation detail in the source code of these blocks
+that is poorly documented in a simple and clear manner. This article
+is an in-depth explanation of the OFDM implementation.
+</p>
+
+<p>
+I'll shortly be working on updating the GR wiki and block
+documentation with these notes, but for now they'll stay
+here. What I won't be covering in depth is the mathematical basis for
+much of OFDM, instead these ideas can mostly be found on my <a href="https://notes.esrh.me/">wiki</a>. I'll
+try to include a bare minimum here, and link to wiki articles when
+possible.
+</p>
+</div>
+<div id="outline-container-org46e239b" class="outline-3">
+<h3 id="org46e239b"><span class="section-number-3">1.1.</span> High level introduction to the OFDM idea</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Orthogonal frequency division multiplexing is a multi-carrier scheme
+that's fairly widely used today, especially in WiFi and LTE.
+</p>
+
+<p>
+This multi-carrier property just means that instead of transmitting a
+signal at one frequency (on one "carrier wave"), we transmit on many
+sub-carriers spaced apart by a little bit of bandwidth.
+</p>
+
+<p>
+The core of the idea that makes OFDM special is the technique by which
+it makes these subcarriers independent (or, orthogonal), which boils
+down to computing the IFFT of the signal at the reciever and adding a
+cyclic prefix in between each set (determined by the size of the FFT)
+of data pieces. I go into much more detail about why this leads to
+interesting properties in <a href="https://notes.esrh.me/orthogonal_frequency_division_multiplexing.html">another article</a> I wrote about it.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2121866" class="outline-2">
+<h2 id="org2121866"><span class="section-number-2">2.</span> Transmission</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The following is a mostly faithful reconstruction of the transmission
+scheme given in <code>gr-digital-python/digital/ofdm_txrx.py</code>.
+<img src="./images/ofdm_tx.png" alt="ofdm_tx.png" />
+</p>
+
+<p>
+For the sake of the narrative, we'll take it step by step and
+introduce the parameters to each block as we get there.
+</p>
+</div>
+
+<div id="outline-container-org3f64dc6" class="outline-3">
+<h3 id="org3f64dc6"><span class="section-number-3">2.1.</span> File source</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+For the purposes of this whole example, let's assume we want to
+transmit some number of bits, say 16 of them (we'll see why this
+number is convenient shortly).
+</p>
+
+<p>
+For simplicity, let's say all these bytes are just the integer 1, so
+You might generate a file to be used with this block with a bash call
+to like <code>printf '\xFF\xFF' &gt; test"</code>, but pick your poison.
+</p>
+
+<p>
+The length on the file source should be set to 2, since it reads data
+in bytes.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgad96291" class="outline-3">
+<h3 id="orgad96291"><span class="section-number-3">2.2.</span> Stream to tagged stream</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Classic streams in GR are just streams of bytes with no information or
+grouping. We however, would like to group the bytes together in a
+flexible way (meaning that we should be able to increase the size of a
+group).
+</p>
+
+<p>
+The technique for doing this is attaching a "tag" every \(n\) samples,
+here 2 as mentioned. This tag says nothing but the length of the group
+following it. Really the reason this is necessary is so that C++
+programs can allocate memory for a buffer large enough to do
+processing on that group, before recieving the data. See the <a href="https://wiki.gnuradio.org/index.php/Stream_Tags">GRwiki
+article</a> on tagged streams. Stream tags are quite flexible, and we'll
+see them again for other uses. Fundamentally, tags are just a pair of
+key and value, where both are polymorphic-types (<a href="https://wiki.gnuradio.org/index.php?title=Polymorphic_Types_(PMTs)">PMT's</a>).
+</p>
+</div>
+</div>
+<div id="outline-container-org22bfe1d" class="outline-3">
+<h3 id="org22bfe1d"><span class="section-number-3">2.3.</span> Stream CRC32</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+This block simply adds the CRC32 error-detection code to the end of
+the data. The reasons why CRC32 tends to be pretty good for OFDM
+bursts, and the implementation of the algorithm are explained pretty
+well by <a href="https://en.wikipedia.org/wiki/Cyclic_redundancy_check">this wikipedia article</a>.
+</p>
+
+<p>
+The CRC32, as the name suggests, adds 32 bits (\(\frac{32}{8} = 4\)
+bytes) to our data, bringing the length up to 6 bytes.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org81d7f89" class="outline-3">
+<h3 id="org81d7f89"><span class="section-number-3">2.4.</span> Header generator</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+The data coming out of the tagged stream block splits here. We'll talk
+about the header generation first.
+</p>
+
+<p>
+Let's take some time to talk poorly-named jargon for a second:
+</p>
+
+<dl class="org-dl">
+<dt>OFDM frame/burst</dt><dd>a set of some number (as many as necessary) of
+OFDM symbols and other stuff</dd>
+<dt>OFDM symbol</dt><dd>a set of \(n\) (determined by the size of the FFT)
+complex symbols</dd>
+<dt>complex symbol</dt><dd>an atomic piece of encoded data. for more
+information about why you can hold signals as complex numbers, see
+<a href="https://notes.esrh.me/quadrature_signal.html">my article</a> on quadrature signals.</dd>
+</dl>
+
+<p>
+The "other stuff" included in an OFDM frame are 3 extra OFDM symbols,
+the header OFDM symbol, and two "sync words" that are known by the
+reciever as part of some standard. We'll see the generation of the
+sync words and their usage for time and frequency synchronization
+later on in the reception section.
+</p>
+
+<p>
+The header OFDM symbol (before modulation) contains three pieces of data:
+</p>
+<ol class="org-ol">
+<li>12 bits for the length of the packet (here, 48 (including the 4 extra from the CRC))</li>
+<li>12 bits for the header number, which is incremented after every packet (modulo xFFFF)</li>
+<li>8 bits of CRC computed from a combination of the above numbers.</li>
+</ol>
+
+<p>
+We must encode these bits one way or another, but the number of bytes
+(and thus complex symbols) used to encode these bits depends on the
+<a href="https://notes.esrh.me/linear_modulation.html">modulation</a> scheme used, and in particular, the number of bits we can
+encode in a specific complex symbol.
+</p>
+
+<p>
+Classically, in the standard, we encode everything in the header with
+BPSK, binary phase shift keying, which essentially encodes one bit in
+the phase of one complex symbol, and gives all-real complex symbols.
+</p>
+
+<p>
+With BPSK, each byte will only have its LSB representing actual
+data. With QPSK, which can encode 2 bits per complex symbol, the
+lowest 2 bits in the byte represent data, and so on. The reason we
+have to do this is because next, we will be mapping bytes to complex
+symbols, but it wouldn't do to pack a byte full of data when we can
+only encode 1 of the 8 bits into a symbol to transmit.
+</p>
+
+<p>
+In sum, at worst (BPSK), we have 32 bytes (although, each byte only
+has one bit of data) of header data, but we will send this as one OFDM
+symbol on it's own. In IEEE jargon this is either called the header or
+the SIGNAL symbol, and in practice also includes information like data
+rate (can't just waste 20 bits, can we?).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8244518" class="outline-3">
+<h3 id="org8244518"><span class="section-number-3">2.5.</span> Repack bits</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+Typically the CRC32 block is routed through a "Repack bits" block
+before being converted to symbols.
+</p>
+
+<p>
+The incoming data is usually a byte array that is packed full of data,
+but we want each byte to represent just as many bits as we can encode
+into a single complex symbol.
+</p>
+
+<p>
+If we're using BPSK, then each byte should only have one bit of
+data. The repack bits block takes a \(k\) and \(l\), and converts bytes
+containing \(k\) bits of data into bytes containing \(l\) bits of
+data. Thus for BPSK, we'd use \(k = 8, l = 1\), and for QPSK we might
+use \(k = 8, l = 2\).
+</p>
+
+<p>
+At \((8, 1)\), a byte array containing <code>[FF]</code> is transformed into <code>[1 1
+1 1 1 1 1 1]</code> Similarly, A byte containing <code>[0F]</code> becomes <code>[0 0 0 0 1
+1 1 1]</code>, where each of these 0s and 1s aren't bits, but <b>bytes with
+the top 7 bits off</b>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org00ef0bb" class="outline-3">
+<h3 id="org00ef0bb"><span class="section-number-3">2.6.</span> Chunks to Symbols</h3>
+<div class="outline-text-3" id="text-2-6">
+<p>
+Here we convert each byte into a complex symbol. This is done via a
+symbol table, or a <i>constellation</i>. I briefly discuss the ideas behind
+constellation encoding <a href="https://notes.esrh.me/phase_shift_keying.html">here</a>, but the high level idea is to map each
+bit, or sequence of bits, to a "location" on the complex plane, or a
+pair of real and complex co-ordinates, so they can be transmitted as a
+quadrature signal. This is possible since \(\sin\) and \(\cos\) form
+orthogonal bases for the signal space.
+</p>
+
+<p>
+Constellations are typically quite specific. Points on the
+constellation should be as far apart as possible, in order to minimize
+the ambiguity when decoding any particular recieved complex
+symbol. However, the distance of a constellation point from the origin
+affects the energy (magnitude of the resulting symbol) required to
+transmit, and so this must be considered as well.
+</p>
+
+<p>
+Here we use binary-phase-shift-keying for the payload's encoding,
+although the IEEE standard suggests QPSK for a higher data
+transmission rate. In BPSK, resulting complex symbols are real, and
+the real part is 1 if the bit is 1, and -1 if the bit is 0.
+</p>
+
+<p>
+In gnuradio, the BPSK constellation points are obtained as:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #5317ac;">from</span> gnuradio <span style="color: #5317ac;">import</span> digital
+<span style="color: #00538b;">header_mod</span> = digital.constellation_bpsk()
+<span style="color: #00538b;">points</span> = header_mod.points()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgac81717" class="outline-3">
+<h3 id="orgac81717"><span class="section-number-3">2.7.</span> Tagged stream mux</h3>
+<div class="outline-text-3" id="text-2-7">
+<p>
+This block combines two streams in order. The output is the first
+stream followed by the second stream.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8951b51" class="outline-3">
+<h3 id="org8951b51"><span class="section-number-3">2.8.</span> OFDM carrier allocator</h3>
+<div class="outline-text-3" id="text-2-8">
+<p>
+Now, we have a long stream of complex symbols, (80, to be exact), and
+we must transform them into vectors of what to load into each
+frequency. Assuming that we are using 64 subcarriers (IEEE standard),
+we expect to produce a vector of \(n\) samples, which are each arrays of
+64 complex numbers, where \(n\) is the number of OFDM symbols we're
+sending in the frame.
+</p>
+
+<p>
+Here, we have one OFDM symbol for the header, one symbol for sync word
+1, and another symbol for sync word 2, and one symbol for data and the
+CRC32 code. The structure of each sync word is given below.
+</p>
+
+<p>
+In OFDM, although we get 64 subcarriers to transmit on, payload OFDM
+symbols only get 48.
+</p>
+
+<p>
+The <a href="https://notes.esrh.me/ieee802_11.html">IEEE 802.11a</a> standard suggests transmitting on subcarriers from
+-26 to +26, for a total of 52 subcarriers. That's what we'll use for
+now in our example. This subcarrier indexing is relative to some
+central carrier frequency at index 0. The frequency spacing between
+subcarriers will be determined by the size of the FFT.
+</p>
+
+<p>
+The bottom 6 and top 5 subcarriers are meant to be left empty
+according to the IEEE standard. This is generally to prevent excessive
+out-of-band emission. It's also convenient when applying a low-pass
+filter to the signal.
+</p>
+
+<p>
+Additionally, the zero-subcarrier is left null. This is again a
+measure for hardware devices that have interference at the carrier
+frequency, specifically <a href="https://en.wikipedia.org/wiki/Direct-conversion_receiver">synchrodynes</a> which have an oscillator tuned to
+the carrier frequency.
+</p>
+
+<p>
+Finally, the pilot subcarriers, (-21, -7, 7, 21) contain
+receiver-known data as well. These sequences are used for a wide
+variety of purposes, and it's protocol dependent. Here, the pilot
+sequence is (1, 1, 1, -1), one symbol per pilot tone.
+</p>
+
+<p>
+It's important to note that the preamble (combination of the sync
+words) don't follow these rules. The sync words transmit
+non-pilot sequences on the pilot subcarriers.
+</p>
+
+<p>
+The reason why we chose to transmit 2 bytes is now clear. After CRC,
+we have 6 bytes, and \(6 * 8 = 48\) bits, if you use BPSK to encode one
+bit to one complex symbol, this is exactly as many as we can fit into
+one OFDM symbol. Using QPSK as the IEEE standard suggests would let
+you fit twice as much data.
+</p>
+
+<p>
+The operation of the OFDM carrier allocator block is now fairly simple
+to explain.
+</p>
+
+<ol class="org-ol">
+<li>Copy each sync word into the output buffer (each are 64 complex
+symbols) straight</li>
+<li>For each of the header and data symbols (remember, we muxed them)
+<ol class="org-ol">
+<li>Copy a symbol to each of the occupied carriers</li>
+<li>Fill in the pilot carriers with the pilot sequence</li>
+</ol></li>
+<li>Return the size of the vector to ensure it's formatted correctly</li>
+</ol>
+
+<p>
+Because we have 2 sync words, 1 header, and 1 data symbol, we'll have
+4 OFDM symbols in a single vector sample [see below for a
+clarification on this] now.
+</p>
+</div>
+
+<div id="outline-container-org3b8e12d" class="outline-4">
+<h4 id="org3b8e12d"><span class="section-number-4">2.8.1.</span> Sync words in OFDM synchronization</h4>
+<div class="outline-text-4" id="text-2-8-1">
+<p>
+The idea of "sync words" are fundamental to wireless
+communication. The receiver is only able to equalize for environmental
+and interference conditions (the "channel"), when there is some data
+transmitted that is known to both the transmitter and receiver.
+</p>
+
+<p>
+Sync words may also be used for detecting when the packet starts at
+all, as well as compensating for a constant (across subcarriers)
+frequency offset, the <i>carrier frequency offset</i>.
+</p>
+
+<p>
+Typically, these sync words have some clever properties that make
+doing these easier. I'll outline the generation of each of these sync
+words briefly.
+</p>
+</div>
+
+<ol class="org-ol">
+<li><a id="org8cba1f3"></a>Sync word 1<br />
+<div class="outline-text-5" id="text-2-8-1-1">
+<p>
+Sync word 1 is generally used for timing estimation (i.e when does our
+data start), which is sent first since you can only pick up data
+following it.
+</p>
+
+<p>
+In 1997, Schmidl &amp; Cox proposed using a sync word that had identical
+first and second halves. What is actually in these halves isn't so
+relevant, but they should have constant transmit energy.
+</p>
+
+<p>
+From a property of the discrete fourier transform, the classical way
+to produce a time-domain signal that is duplicated around its center
+is to take the DFT of a signal that has real-only data on even
+frequencies (assuming a symmetric fft frequency ordering scheme
+starting from \(-k\) and ending at \(k-1\) inclusive). To be more
+specific, this holds when the signal has hermitian symmetry and the
+right parity. In the interest of space, I'm not including the proof
+here, but it can be found in 8.6.4 (p. 653) of <i>Discrete-Time Signal
+Processing</i> by Oppenheim &amp; Schafer.
+</p>
+
+<p>
+We can produce this sync word with:
+</p>
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8f0075;">list</span>(<span style="color: #8f0075;">map</span>(<span style="color: #5317ac;">lambda</span> x: np.sqrt(2) * np.random.choice([-1, 1])
+         <span style="color: #5317ac;">if</span> (x <span style="color: #5317ac;">in</span> oc[0]+[-21, -7, 7, 21] <span style="color: #5317ac;">and</span> x % 2 == 0)
+         <span style="color: #5317ac;">else</span> 0,
+         <span style="color: #8f0075;">range</span>(-32, 32)))
+</pre>
+</div>
+<p>
+where <code>oc[0]</code> is a list of occupied carriers.
+</p>
+</div>
+</li>
+
+<li><a id="org4173887"></a>Sync word 2<br />
+<div class="outline-text-5" id="text-2-8-1-2">
+<p>
+Sync word 2 is used for channel estimation and coarse frequency
+offset. Computed via
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="color: #8f0075;">list</span>(<span style="color: #8f0075;">map</span>(<span style="color: #5317ac;">lambda</span> x: np.random.choice([-1, 1])
+         <span style="color: #5317ac;">if</span> x <span style="color: #5317ac;">in</span> oc[0]+[-21, -7, 7, 21]
+         <span style="color: #5317ac;">else</span> 0,
+         <span style="color: #8f0075;">range</span>(-32, 32)))
+</pre>
+</div>
+
+<p>
+Note that the second sync word indeed has higher magnitudes, and thus
+transmit energy, but it will prove to be useful during reception.
+</p>
+</div>
+</li>
+</ol>
+</div>
+
+<div id="outline-container-org0e7c62c" class="outline-4">
+<h4 id="org0e7c62c"><span class="section-number-4">2.8.2.</span> Streams vs vectors</h4>
+<div class="outline-text-4" id="text-2-8-2">
+<p>
+In GR, streams and vectors are the two main types of data passing
+techniques. Streams pass each sample individually, whereas vectors
+contain some number of samples in a vector.
+</p>
+
+<p>
+In this way, blocks that operate on vectors (notably, the FFT block),
+should be thought of as doing a parallel computation.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd822fc1" class="outline-3">
+<h3 id="orgd822fc1"><span class="section-number-3">2.9.</span> FFT</h3>
+<div class="outline-text-3" id="text-2-9">
+<p>
+This block simply applies the inverse <a href="https://notes.esrh.me/fourier_transform.html">discrete fourier transform</a> in
+parallel (operates on a vector) to each of the 64-length OFDM symbols.
+</p>
+
+<p>
+The output will therefore also be 64-length time-domain OFDM symbols,
+although the meaning of the word is now slightly different. The
+inverse fourier transform is used here, expecting that the resulting
+time domain signal will be cyclically prefixed.
+</p>
+</div>
+</div>
+<div id="outline-container-org548155e" class="outline-3">
+<h3 id="org548155e"><span class="section-number-3">2.10.</span> OFDM cyclic prefixer</h3>
+<div class="outline-text-3" id="text-2-10">
+<p>
+This block applied a cyclic prefix to each item in the vector input. A
+cyclic prefix is simply prefixing a block by some number of
+time-domain symbols from the end of a 64-length block.
+</p>
+
+<p>
+The cyclic prefix is the core of the OFDM idea, and has deep
+implications for equalization at the receiver. I'd recommend my
+article on OFDM, or the paper "Wireless multicarrier communications"
+by Wang &amp; Giannakis (2000).
+</p>
+
+<p>
+The high level idea, skipping a fair bit of linear algebra, is that
+adding the cyclic prefix turns the linear convolution of the data with
+the channel (since the output of a linearly time invariant channel is
+determined via linear convolution) into a circular convolution. As it
+would turn out, the matrix that does circular convolution turns out to
+be diagonalizable in the Fourier basis, which implies a removal of
+inter-symbol interference by pre and post multiplying by the inverse
+DFT and DFT matrices, as well as cheap equalization techniques.
+</p>
+
+<p>
+As for the implementation of the cyclic prefixer block, I'll only
+explain it in a bit of a limited scope. The block has two operating
+modes, one meant to be used before the carrier allocator in the stream
+domain "packet mode", and the other meant to be used after the FFT, in
+so called "freewheeling mode." I'll only cover the second, which is
+enabled by not specifying a length tag.
+</p>
+
+<p>
+Additionally, the block supports the application of the raised
+cosine pulse shaping filter parametrized by a rolloff length, but this
+is typically unnecessary and is indeed set to a default of 0.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Eshan</p>
+<p class="date">Created: 2022-07-19 Tue 12:07</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

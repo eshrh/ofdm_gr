@@ -1,0 +1,538 @@
+options:
+  parameters:
+    author: Eshan Ramesh
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: default
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: ofdm
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: fft_len
+  id: variable
+  parameters:
+    comment: ''
+    value: '64'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 76.0]
+    rotation: 0
+    state: true
+- name: header_formatter
+  id: variable
+  parameters:
+    comment: ''
+    value: digital.packet_header_ofdm(occupied_carriers, n_syms=1, len_tag_key="packet_len",
+      frame_len_tag_key="frame_len", bits_per_header_sym=header_mod.bits_per_symbol(),
+      bits_per_payload_sym=payload_mod.bits_per_symbol())
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1016, 76.0]
+    rotation: 0
+    state: enabled
+- name: header_mod
+  id: variable
+  parameters:
+    comment: ''
+    value: digital.constellation_bpsk()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1216, 20.0]
+    rotation: 0
+    state: enabled
+- name: occupied_carriers
+  id: variable
+  parameters:
+    comment: ''
+    value: (list(range(-26, -21)) + list(range(-20, -7)) + list(range(-6, 0)) + list(range(1,
+      7)) + list(range(8, 21)) + list(range(22, 27)),)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1016, 20.0]
+    rotation: 0
+    state: enabled
+- name: payload_mod
+  id: variable
+  parameters:
+    comment: ''
+    value: digital.constellation_bpsk()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1216, 76.0]
+    rotation: 0
+    state: enabled
+- name: pilot_carriers
+  id: variable
+  parameters:
+    comment: ''
+    value: ((-21, -7, 7, 21,),)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [616, 12.0]
+    rotation: 0
+    state: enabled
+- name: pilot_symbols
+  id: variable
+  parameters:
+    comment: ''
+    value: ((1, 1, 1, -1,),)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 12.0]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '32000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 12]
+    rotation: 0
+    state: enabled
+- name: sync_word1
+  id: variable
+  parameters:
+    comment: ''
+    value: '[np.sqrt(2) * np.random.choice([-1, 1]) if (x in occupied_carriers[0]+[-21,
+      -7, 7, 21] and x % 2 == 0) else 0 for x in range(-32, 32)]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [584, 76.0]
+    rotation: 0
+    state: enabled
+- name: sync_word2
+  id: variable
+  parameters:
+    comment: ''
+    value: '[np.random.choice([-1, 1]) if (x in occupied_carriers[0]+[-21, -7, 7,
+      21]) else 0 for x in range(-32, 32)]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 76.0]
+    rotation: 0
+    state: enabled
+- name: blocks_file_source_0
+  id: blocks_file_source
+  parameters:
+    affinity: ''
+    alias: ''
+    begin_tag: pmt.PMT_NIL
+    comment: ''
+    file: /home/esrh/arcom/ofdm_rewrite/int_ones.bin
+    length: '2'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    repeat: 'True'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [32, 132.0]
+    rotation: 0
+    state: enabled
+- name: blocks_null_sink_0
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [968, 424.0]
+    rotation: 0
+    state: true
+- name: blocks_stream_to_tagged_stream_0
+  id: blocks_stream_to_tagged_stream
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    len_tag_key: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packet_len: '2'
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [384, 156.0]
+    rotation: 0
+    state: true
+- name: blocks_tagged_stream_mux_0
+  id: blocks_tagged_stream_mux
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    lengthtagname: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    ninputs: '2'
+    tag_preserve_head_pos: '0'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [144, 352.0]
+    rotation: 180
+    state: enabled
+- name: blocks_throttle_0
+  id: blocks_throttle
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [232, 164.0]
+    rotation: 0
+    state: true
+- name: digital_chunks_to_symbols_xx_0
+  id: digital_chunks_to_symbols_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    dimension: '1'
+    in_type: byte
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_ports: '1'
+    out_type: complex
+    symbol_table: header_mod.points()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [880, 216.0]
+    rotation: 180
+    state: enabled
+- name: digital_chunks_to_symbols_xx_0_0
+  id: digital_chunks_to_symbols_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    dimension: '1'
+    in_type: byte
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_ports: '1'
+    out_type: complex
+    symbol_table: payload_mod.points()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [560, 368.0]
+    rotation: 180
+    state: enabled
+- name: digital_crc32_bb_0
+  id: digital_crc32_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    check: 'False'
+    comment: ''
+    lengthtagname: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packed: 'True'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [608, 148.0]
+    rotation: 0
+    state: true
+- name: digital_ofdm_carrier_allocator_cvc_0_0
+  id: digital_ofdm_carrier_allocator_cvc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    fft_len: fft_len
+    len_tag_key: packet_len
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    occupied_carriers: occupied_carriers
+    output_is_shifted: 'True'
+    pilot_carriers: pilot_carriers
+    pilot_symbols: pilot_symbols
+    sync_words: (sync_word1, sync_word2)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [144, 420.0]
+    rotation: 0
+    state: enabled
+- name: digital_ofdm_cyclic_prefixer_0
+  id: digital_ofdm_cyclic_prefixer
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    cp_len: ((fft_len//4),)
+    input_size: fft_len
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    rolloff: '0'
+    tagname: ''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [696, 460.0]
+    rotation: 0
+    state: enabled
+- name: digital_packet_headergenerator_bb_0_0
+  id: digital_packet_headergenerator_bb
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    header_formatter: header_formatter.base()
+    len_tag_key: '"packet_len"'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [880, 156.0]
+    rotation: 0
+    state: enabled
+- name: epy_block_0
+  id: epy_block
+  parameters:
+    _source_code: "import pmt\nimport numpy as np\nfrom gnuradio import gr\n\nclass\
+      \ blk(gr.sync_block):\n    def __init__(self):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name='inspect',\n            # in_sig=[(np.byte,\
+      \ 1)],\n            in_sig=[(np.complex64, 1)],\n            out_sig=[]\n  \
+      \      )\n        # if an attribute with the same name as a parameter is found,\n\
+      \        # a callback is registered (properties work, too).\n\n    def work(self,\
+      \ input_items, output_items):\n        tags = self.get_tags_in_window(0, 0,\
+      \ len(input_items[0]))\n        # print(\"\".join(list(map(hex, input_items[0]))))\n\
+      \        print(\"START --\")\n        print(input_items[0], len(input_items[0]))\n\
+      \        # print(\"\".join(\n        #     [f\"key: {pmt.to_python(tag.key)},\
+      \ val: {pmt.to_python(tag.value)}\"\n        #      for tag in tags]))\n   \
+      \     return 0\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('inspect', 'blk', [], [('0', 'complex', 1)], [], '', [])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1336, 336.0]
+    rotation: 0
+    state: disabled
+- name: epy_block_0_0
+  id: epy_block
+  parameters:
+    _source_code: "import pmt\nimport numpy as np\nfrom gnuradio import gr\n\nclass\
+      \ blk(gr.sync_block):\n    def __init__(self):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name='inspect vector',\n            in_sig=[(np.complex64,\
+      \ 64)],\n            out_sig=[]\n        )\n        # if an attribute with the\
+      \ same name as a parameter is found,\n        # a callback is registered (properties\
+      \ work, too).\n\n    def work(self, input_items, output_items):\n        tags\
+      \ = self.get_tags_in_window(0, 0, len(input_items[0]))\n        print(\"START\
+      \ --\")\n        print(len(input_items[0]), list(map(len, input_items[0])))\n\
+      \        # print(\"\".join(\n        #     [f\"key: {pmt.to_python(tag.key)},\
+      \ val: {pmt.to_python(tag.value)}\"\n        #      for tag in tags]))\n   \
+      \     return 0\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('inspect vector', 'blk', [], [('0', 'complex', 64)], [], '', [])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [464, 576.0]
+    rotation: 0
+    state: disabled
+- name: fft_vxx_0
+  id: fft_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    fft_size: fft_len
+    forward: 'False'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nthreads: '1'
+    shift: 'True'
+    type: complex
+    window: ()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [456, 444.0]
+    rotation: 0
+    state: enabled
+- name: import_0
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: from gnuradio import digital
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [288, 12.0]
+    rotation: 0
+    state: true
+- name: import_0_0
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: import numpy as np
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [392, 12.0]
+    rotation: 0
+    state: true
+- name: qtgui_sink_x_0
+  id: qtgui_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    bw: samp_rate
+    comment: ''
+    fc: '0'
+    fftsize: '1024'
+    gui_hint: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    name: '""'
+    plotconst: 'True'
+    plotfreq: 'True'
+    plottime: 'True'
+    plotwaterfall: 'True'
+    rate: '10'
+    showports: 'False'
+    showrf: 'False'
+    type: complex
+    wintype: window.WIN_BLACKMAN_hARRIS
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [880, 308.0]
+    rotation: 0
+    state: true
+- name: virtual_sink_1
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: tx
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [920, 476.0]
+    rotation: 0
+    state: true
+
+connections:
+- [blocks_file_source_0, '0', blocks_throttle_0, '0']
+- [blocks_stream_to_tagged_stream_0, '0', digital_crc32_bb_0, '0']
+- [blocks_tagged_stream_mux_0, '0', digital_ofdm_carrier_allocator_cvc_0_0, '0']
+- [blocks_throttle_0, '0', blocks_stream_to_tagged_stream_0, '0']
+- [digital_chunks_to_symbols_xx_0, '0', blocks_tagged_stream_mux_0, '0']
+- [digital_chunks_to_symbols_xx_0_0, '0', blocks_tagged_stream_mux_0, '1']
+- [digital_crc32_bb_0, '0', digital_chunks_to_symbols_xx_0_0, '0']
+- [digital_crc32_bb_0, '0', digital_packet_headergenerator_bb_0_0, '0']
+- [digital_ofdm_carrier_allocator_cvc_0_0, '0', epy_block_0_0, '0']
+- [digital_ofdm_carrier_allocator_cvc_0_0, '0', fft_vxx_0, '0']
+- [digital_ofdm_cyclic_prefixer_0, '0', blocks_null_sink_0, '0']
+- [digital_ofdm_cyclic_prefixer_0, '0', qtgui_sink_x_0, '0']
+- [digital_ofdm_cyclic_prefixer_0, '0', virtual_sink_1, '0']
+- [digital_packet_headergenerator_bb_0_0, '0', digital_chunks_to_symbols_xx_0, '0']
+- [fft_vxx_0, '0', digital_ofdm_cyclic_prefixer_0, '0']
+
+metadata:
+  file_format: 1
+  grc_version: v3.11.0.0git-188-g08115810
