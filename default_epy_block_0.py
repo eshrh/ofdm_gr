@@ -2,24 +2,19 @@ import pmt
 import numpy as np
 from gnuradio import gr
 
-class blk(gr.sync_block):
+
+class blk(gr.sync_block):  # other base classes are basic_block, decim_block, interp_block
+    """Embedded Python Block example - a simple multiply const"""
+
     def __init__(self):
         gr.sync_block.__init__(
             self,
-            name='inspect',
-            # in_sig=[(np.byte, 1)],
-            in_sig=[(np.complex64, 1)],
-            out_sig=[]
-        )
-        # if an attribute with the same name as a parameter is found,
-        # a callback is registered (properties work, too).
+            name='inspect vector',
+            in_sig=[(np.complex64, 64)],
+            out_sig=None)
 
     def work(self, input_items, output_items):
-        tags = self.get_tags_in_window(0, 0, len(input_items[0]))
-        # print("".join(list(map(hex, input_items[0]))))
-        print("START --")
-        print(input_items[0], len(input_items[0]))
-        # print("".join(
-        #     [f"key: {pmt.to_python(tag.key)}, val: {pmt.to_python(tag.value)}"
-        #      for tag in tags]))
+        print("START--")
+        print(len(input_items[0]), list(map(len, input_items[0])))
+        print(input_items[0][0])
         return 0
